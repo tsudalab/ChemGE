@@ -18,7 +18,7 @@ sns.distplot(scores, label="ZINC")
 plt.xlim(-50, 100)
 
 scores = []
-with open('log-rdock-known-active', 'r') as f:
+with open('mol-rdock-known-active.csv', 'r') as f:
     reader = csv.reader(f)
     for row in reader:
         score = float(row[0])
@@ -27,7 +27,7 @@ with open('log-rdock-known-active', 'r') as f:
 sns.distplot(scores, label="known active")
 
 scores = []
-with open('log-rdock-all', 'r') as f:
+with open('mol-rdock-chemge-all.csv', 'r') as f:
     reader = csv.reader(f)
     for row in reader:
         score = float(row[0])
