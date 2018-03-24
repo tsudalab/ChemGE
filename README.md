@@ -63,7 +63,7 @@ cd ChemGE
 ## Optimize J
 
 ```
-python -u optimizeJ.py > log-file &
+python -u optimize-J.py > log-file &
 ```
 
 ## Optimize docking score (multi-thread)
@@ -100,3 +100,6 @@ $ $RBT_ROOT/util/mol2sd crystal_ligand.mol2 # mol2 -> sd(f)
 $ $RBT_ROOT/util/gen_prm crystal_ligand.sd receptor.mol2 > cavity.prm
 $ $RBT_ROOT/build/exe/rbcavity -r cavity.prm -W
 ```
+
+# License
+This project is licensed under the terms of the MIT license.
