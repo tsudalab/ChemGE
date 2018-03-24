@@ -2,14 +2,14 @@ from __future__ import print_function
 import argparse
 import copy
 import nltk
-import time
+import threading
 
 import numpy as np
 from rdkit import Chem
 from rdkit import rdBase
 
 import cfg_util
-import rdock_util
+import score_util
 import zinc_grammar
 
 rdBase.DisableLog('rdApp.error')
@@ -75,21 +75,46 @@ def canonicalize(smiles):
         return smiles
 
 
+elapsed_min = 0
+best_score = 0
+mean_score = 0
+std_score = 0
+min_score = 0
+best_smiles = ""
+all_smiles = []
+
+
+def current_best():
+    global elapsed_min
+    global best_score
+    global best_smiles
+    global mean_score
+    global min_score
+    global std_score
+    global all_smiles
+    elapsed_min += 1
+    print("${},{},{},{}"
+          .format(elapsed_min, best_score, best_smiles, len(all_smiles)))
+    t = threading.Timer(60, current_best, [])
+    t.start()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--smifile', default='250k_rndm_zinc_drugs_clean.smi')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--mu', type=int, default=32)
-    parser.add_argument('--lam', type=int, default=64)
-    parser.add_argument('--generation', type=int, default=1000)
     args = parser.parse_args()
 
     np.random.seed(args.seed)
 
+    global best_smiles
+    global best_score
+    global all_smiles
+
     gene_length = 300
 
-    N_mu = args.mu
-    N_lambda = args.lam
+    N_mu = 100
+    N_lambda = 200
 
     # initialize population
     seed_smiles = []
@@ -98,62 +123,50 @@ def main():
             smiles = line.rstrip()
             seed_smiles.append(smiles)
 
-    start_time = time.time()
-
     initial_smiles = np.random.choice(seed_smiles, N_mu+N_lambda)
-    initial_smiles = [s for s in initial_smiles]
-    initial_genes = [CFGtoGene(cfg_util.encode(smiles), max_len=gene_length)
+    initial_smiles = [canonicalize(s) for s in initial_smiles]
+    initial_genes = [CFGtoGene(cfg_util.encode(s), max_len=gene_length)
                      for s in initial_smiles]
-    initial_scores = rdock_util.score_qsub(initial_smiles)
+    initial_scores = [score_util.calc_score(s) for s in initial_smiles]
 
     population = []
     for score, gene, smiles in zip(initial_scores, initial_genes,
                                    initial_smiles):
         population.append((score, smiles, gene))
 
-    population = sorted(population, key=lambda x: x[0])[:N_mu]
+    population = sorted(population, key=lambda x: x[0], reverse=True)[:N_mu]
 
-    all_smiles = [canonicalize(p[1]) for p in population]
-    all_result = [(p[0], s) for p, s in zip(population, all_smiles)]
+    t = threading.Timer(60, current_best, [])
+    t.start()
+    print("Start!")
+    all_smiles = [p[1] for p in population]
+    for generation in range(1000000000):
+        scores = [p[0] for p in population]
+        mean_score = np.mean(scores)
+        min_score = np.min(scores)
+        std_score = np.std(scores)
+        best_score = np.max(scores)
+        idx = np.argmax(scores)
+        best_smiles = population[idx][1]
+        print("%{},{},{},{},{}".format(generation, best_score,
+                                       mean_score, min_score, std_score))
 
-    scores = [p[0] for p in population]
-    max_score = np.max(scores)
-    elapsed_time = time.time() - start_time
-    print("%{},{},{}".format(0, max_score, elapsed_time))
-    for p in population:
-        print("{},{}".format(p[0], p[1]))
-
-    for generation in range(args.generation):
-        new_population_smiles = []
-        new_population_genes = []
+        new_population = []
         for _ in range(N_lambda):
             p = population[np.random.randint(len(population))]
             p_gene = p[2]
             c_gene = mutation(p_gene)
 
             c_smiles = canonicalize(cfg_util.decode(GenetoCFG(c_gene)))
-            if c_smiles != '' and c_smiles not in all_smiles:
-                new_population_smiles.append(c_smiles)
-                new_population_genes.append(c_gene)
+            if c_smiles not in all_smiles:
+                c_score = score_util.calc_score(c_smiles)
+                c = (c_score, c_smiles, c_gene)
+                new_population.append(c)
                 all_smiles.append(c_smiles)
 
-        new_population_scores = rdock_util.score_qsub(new_population_smiles)
-        for score, gene, smiles in zip(new_population_scores,
-                                       new_population_genes,
-                                       new_population_smiles):
-            population.append((score, smiles, gene))
-            all_result.append((score, smiles))
-        population = sorted(population, key=lambda x: x[0])[:N_mu]
-        scores = [i[0] for i in population]
-        max_score = np.max(scores)
-        elapsed_time = time.time() - start_time
-        print("%{},{},{}".format(generation+1, max_score, elapsed_time))
-        for p in population:
-            print("{},{}".format(p[0], p[1]))
-
-    print("list of generated smiles:")
-    for r in all_result:
-        print("{},{}".format(r[0], r[1]))
+        population.extend(new_population)
+        population = sorted(population,
+                            key=lambda x: x[0], reverse=True)[:N_mu]
 
 if __name__ == "__main__":
     main()

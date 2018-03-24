@@ -1,15 +1,17 @@
 import nltk
-import zinc_grammar
 
 import numpy as np
 
+import zinc_grammar
+
+
 def get_zinc_tokenizer(cfg):
     long_tokens = [a for a in cfg._lexical_index.keys() if len(a) > 1]
-    replacements = ['$','%','^']
+    replacements = ['$', '%', '^']
     assert len(long_tokens) == len(replacements)
-    for token in replacements: 
+    for token in replacements:
         assert token not in cfg._lexical_index
-    
+
     def tokenize(smiles):
         for i, token in enumerate(long_tokens):
             smiles = smiles.replace(token, replacements[i])
@@ -18,10 +20,11 @@ def get_zinc_tokenizer(cfg):
             try:
                 ix = replacements.index(token)
                 tokens.append(long_tokens[ix])
-            except:
+            except Exception:
                 tokens.append(token)
         return tokens
     return tokenize
+
 
 def encode(smiles):
     GCFG = zinc_grammar.GCFG
@@ -37,6 +40,7 @@ def encode(smiles):
     indices = np.array([prod_map[prod] for prod in productions_seq], dtype=int)
     return indices
 
+
 def prods_to_eq(prods):
     seq = [prods[0].lhs()]
     for prod in prods:
@@ -48,8 +52,9 @@ def prods_to_eq(prods):
                 break
     try:
         return ''.join(seq)
-    except:
+    except Exception:
         return ''
+
 
 def decode(rule):
     productions = zinc_grammar.GCFG.productions()

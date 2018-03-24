@@ -1,36 +1,37 @@
 from __future__ import print_function
 import argparse
-import threading
-import nltk
 import copy
-import sys
+import multiprocessing
+import nltk
+import time
+
 import numpy as np
+from rdkit import Chem
+from rdkit import rdBase
+
 import cfg_util
 import rdock_util
-import score_util
 import zinc_grammar
-import time
-from rdkit import Chem
 
-import multiprocessing
-import functools
-from rdkit import rdBase
 rdBase.DisableLog('rdApp.error')
-
 GCFG = zinc_grammar.GCFG
+
 
 def CFGtoGene(prod_rules, max_len=-1):
     gene = []
     for r in prod_rules:
         lhs = GCFG.productions()[r].lhs()
-        possible_rules = [idx for idx, rule in enumerate(GCFG.productions()) if rule.lhs() == lhs]
+        possible_rules = [idx for idx, rule in enumerate(GCFG.productions())
+                          if rule.lhs() == lhs]
         gene.append(possible_rules.index(r))
     if max_len > 0:
         if len(gene) > max_len:
             gene = gene[:max_len]
         else:
-            gene = gene + [np.random.randint(0, 256) for _ in range(max_len-len(gene))]
+            gene = gene + [np.random.randint(0, 256)
+                           for _ in range(max_len-len(gene))]
     return gene
+
 
 def GenetoCFG(gene):
     prod_rules = []
@@ -38,16 +39,18 @@ def GenetoCFG(gene):
     for g in gene:
         try:
             lhs = stack.pop()
-        except:
+        except Exception:
             break
-        possible_rules = [idx for idx, rule in enumerate(GCFG.productions()) if rule.lhs() == lhs]
-        rule = possible_rules[g%len(possible_rules)]
+        possible_rules = [idx for idx, rule in enumerate(GCFG.productions())
+                          if rule.lhs() == lhs]
+        rule = possible_rules[g % len(possible_rules)]
         prod_rules.append(rule)
-        rhs = filter(lambda a: (type(a) == nltk.grammar.Nonterminal) 
-                                and (str(a) != 'None'),
-                                zinc_grammar.GCFG.productions()[rule].rhs())
+        rhs = filter(lambda a: (type(a) == nltk.grammar.Nonterminal)
+                     and (str(a) != 'None'),
+                     zinc_grammar.GCFG.productions()[rule].rhs())
         stack.extend(list(rhs)[::-1])
     return prod_rules
+
 
 def selectParent(population, tournament_size=3):
     idx = np.random.randint(len(population), size=tournament_size)
@@ -57,11 +60,6 @@ def selectParent(population, tournament_size=3):
             best = population[i]
     return best
 
-def crossover(p1_gene, p2_gene):
-    crossover_point = np.random.choice(len(p1_gene))
-    c1_gene = p1_gene[:crossover_point] + p2_gene[crossover_point:]
-    c2_gene = p2_gene[:crossover_point] + p1_gene[crossover_point:]
-    return (c1_gene, c2_gene)
 
 def mutation(gene):
     idx = np.random.choice(len(gene))
@@ -69,12 +67,14 @@ def mutation(gene):
     gene_mutant[idx] = np.random.randint(0, 256)
     return gene_mutant
 
+
 def canonicalize(smiles):
     mol = Chem.MolFromSmiles(smiles)
     if smiles != '' and mol is not None and mol.GetNumAtoms() > 1:
         return Chem.MolToSmiles(mol)
     else:
         return smiles
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -106,16 +106,18 @@ def main():
     initial_smiles = np.random.choice(seed_smiles, N_mu+N_lambda)
     initial_smiles = [s for s in initial_smiles]
     print(initial_smiles)
-    initial_genes = [CFGtoGene(cfg_util.encode(smiles), max_len=gene_length) for smiles in initial_smiles]
+    initial_genes = [CFGtoGene(cfg_util.encode(smiles), max_len=gene_length)
+                     for s in initial_smiles]
     print("initial score caluculating")
     initial_scores = pool.map(rdock_util.score, initial_smiles)
     print("initial score caluculated")
 
     population = []
-    for score, gene, smiles in zip(initial_scores, initial_genes, initial_smiles):
+    for score, gene, smiles in zip(initial_scores, initial_genes,
+                                   initial_smiles):
         population.append((score, smiles, gene))
-    
-    population = sorted(population, key=lambda x:x[0])[:N_mu]
+
+    population = sorted(population, key=lambda x: x[0])[:N_mu]
 
     all_smiles = [canonicalize(p[1]) for p in population]
     all_result = [(p[0], s) for p, s in zip(population, all_smiles)]
@@ -132,9 +134,7 @@ def main():
         new_population_genes = []
         for _ in range(N_lambda):
             p = population[np.random.randint(len(population))]
-
             p_gene = p[2]
-
             c_gene = mutation(p_gene)
 
             c_smiles = canonicalize(cfg_util.decode(GenetoCFG(c_gene)))
@@ -143,15 +143,18 @@ def main():
                 new_population_genes.append(c_gene)
                 all_smiles.append(c_smiles)
 
-        new_population_scores = pool.map(rdock_util.score, new_population_smiles)
-        for score, gene, smiles in zip(new_population_scores, new_population_genes, new_population_smiles):
+        new_population_scores = pool.map(rdock_util.score,
+                                         new_population_smiles)
+        for score, gene, smiles in zip(new_population_scores,
+                                       new_population_genes,
+                                       new_population_smiles):
             population.append((score, smiles, gene))
             all_result.append((score, smiles))
-        population = sorted(population, key=lambda x:x[0])[:N_mu]
-        scores = [p[0] for p in population]
+        population = sorted(population, key=lambda x: x[0])[:N_mu]
+        scores = [i[0] for i in population]
         min_score = np.min(scores)
         elapsed_time = time.time() - start_time
-        print("%{},{},{}".format(generation+1, min_score,elapsed_time))
+        print("%{},{},{}".format(generation+1, min_score, elapsed_time))
         for p in population:
             print("{},{}".format(p[0], p[1]))
 

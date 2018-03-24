@@ -1,14 +1,12 @@
 from __future__ import print_function
+import hashlib
+import os
+import subprocess
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
-import subprocess
-import multiprocessing
-from datetime import datetime
-import hashlib
-import traceback
-import os
-import sys
+
 
 def score_qsub(smiles_list, num_docking=3):
     md5_list = []
@@ -27,34 +25,39 @@ def score_qsub(smiles_list, num_docking=3):
         try:
             if mol is not None and Descriptors.MolWt(mol) < 500:
                 mol = Chem.AddHs(mol)
-                cid = AllChem.EmbedMolecule(mol)
-                opt = AllChem.UFFOptimizeMolecule(mol,maxIters=200)
+                AllChem.EmbedMolecule(mol)
+                AllChem.UFFOptimizeMolecule(mol, maxIters=200)
                 fw = Chem.SDWriter(sdf_name)
                 fw.write(mol)
                 fw.close()
 
-                #----rdock calculation
+                # rdock calculation
                 cmd = '''#!/bin/bash
 export RBT_ROOT="$HOME/rDock_2013.1_src"
 export RBT_HOME=$HOME/rDock_2013.1_src
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$RBT_ROOT/lib"
 export PATH="$PATH:$RBT_ROOT/bin"
 '''
-                cmd += '$RBT_ROOT/bin/rbdock -r cavity.prm -p $RBT_ROOT/data/scripts/dock.prm -i {} -o {} -T 1 -n {} > /dev/null'.format(sdf_name, docking_result_file, num_docking)
+                cmd += '$RBT_ROOT/bin/rbdock -r cavity.prm '\
+                       '-p $RBT_ROOT/data/scripts/dock.prm '\
+                       '-i {} -o {} -T 1 -n {} > /dev/null'\
+                       .format(sdf_name, docking_result_file, num_docking)
                 qsub_filename = 'qsub-{}.sh'.format(smiles_md5)
                 with open(qsub_filename, 'w') as f:
                     f.write(cmd)
-                procs.append(subprocess.Popen(['qsub -cwd -sync y {} > /dev/null'.format(qsub_filename)], shell=True))
-        except:
+                procs.append(subprocess.Popen(
+                             ['qsub -cwd -sync y {} > /dev/null'
+                              .format(qsub_filename)], shell=True))
+        except Exception:
             pass
 
     [p.wait() for p in procs]
     scores = []
-    score_name = '<SCORE.INTER>' # <SCORE> or <SCORE.INTER>
+    score_name = '<SCORE.INTER>'  # <SCORE> or <SCORE.INTER>
     for md5 in md5_list:
         min_score = 1e10
         path = '{}_out.sd'.format(md5)
-        #----find the minimum score of rdock from multiple docking results
+        # find the minimum score of rdock from multiple docking results
         if os.path.exists(path):
             with open(path, 'r') as f:
                 lines = f.readlines()
@@ -63,17 +66,18 @@ export PATH="$PATH:$RBT_ROOT/bin"
                 if isScore:
                     min_score = min(float(line), min_score)
                     isScore = False
-                if score_name in line: # next line has score
+                if score_name in line:  # next line has score
                     isScore = True
         scores.append(min_score)
     assert(len(smiles_list) == len(scores))
     return scores
 
+
 def score(smiles, num_docking=3):
     smiles_md5 = str(hashlib.md5(smiles.encode('utf-8')).hexdigest())
     docking_result_file = '{}_out'.format(smiles_md5)
     sdf_name = '{}.sdf'.format(smiles_md5)
-    score_name = '<SCORE.INTER>' # <SCORE> or <SCORE.INTER>
+    score_name = '<SCORE.INTER>'  # <SCORE> or <SCORE.INTER>
 
     min_score = 1e10
 
@@ -85,19 +89,22 @@ def score(smiles, num_docking=3):
     try:
         if mol is not None and Descriptors.MolWt(mol) < 500:
             mol = Chem.AddHs(mol)
-            cid = AllChem.EmbedMolecule(mol)
-            opt = AllChem.UFFOptimizeMolecule(mol,maxIters=200)
+            AllChem.EmbedMolecule(mol)
+            AllChem.UFFOptimizeMolecule(mol, maxIters=200)
             fw = Chem.SDWriter(sdf_name)
             fw.write(mol)
             fw.close()
 
-            #----rdock calculation
-            cmd = '$RBT_ROOT/build/exe/rbdock -r cavity.prm -p $RBT_ROOT/data/scripts/dock.prm -i {} -o {} -T 1 -n {} > /dev/null'.format(sdf_name, docking_result_file, num_docking)
+            # rdock calculation
+            cmd = '$RBT_ROOT/build/exe/rbdock -r cavity.prm '\
+                  '-p $RBT_ROOT/data/scripts/dock.prm '\
+                  '-i {} -o {} -T 1 -n {} > /dev/null'\
+                  .format(sdf_name, docking_result_file, num_docking)
             path = docking_result_file+'.sd'
             if not os.path.exists(path):
-                proc = subprocess.call(cmd, shell=True)
+                subprocess.call(cmd, shell=True)
 
-            #----find the minimum score of rdock from multiple docking results
+            # find the minimum score of rdock from multiple docking results
             if os.path.exists(path):
                 with open(path, 'r') as f:
                     lines = f.readlines()
@@ -106,9 +113,8 @@ def score(smiles, num_docking=3):
                     if isScore:
                         min_score = min(float(line), min_score)
                         isScore = False
-                    if score_name in line: # next line has score
+                    if score_name in line:  # next line has score
                         isScore = True
-    except:
+    except Exception:
         pass
-    #print('{},{}'.format(min_score, smiles), file=sys.stderr)
     return min_score
