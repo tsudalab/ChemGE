@@ -73,12 +73,12 @@ python -u optimize-rdock.py > log-file &
 ```
 
 ## Optimize docking score (qsub)
+You need to set up parallel environment with qsub to execute this program.
+Using [CfnCluster](https://github.com/awslabs/cfncluster) is recommended.
 
 ```
 python -u optimize-rdock-qsub.py > log-file &
 ```
-
-Using [CfnCluster](https://github.com/awslabs/cfncluster) is recommended.
 
 # Explanation of files
 
