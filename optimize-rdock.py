@@ -106,7 +106,7 @@ def main():
     initial_smiles = np.random.choice(seed_smiles, N_mu+N_lambda)
     initial_smiles = [s for s in initial_smiles]
     print(initial_smiles)
-    initial_genes = [CFGtoGene(cfg_util.encode(smiles), max_len=gene_length)
+    initial_genes = [CFGtoGene(cfg_util.encode(s), max_len=gene_length)
                      for s in initial_smiles]
     print("initial score caluculating")
     initial_scores = pool.map(rdock_util.score, initial_smiles)
