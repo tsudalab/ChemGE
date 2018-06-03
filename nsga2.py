@@ -63,13 +63,14 @@ class Solution:
         '''
         True if this solution dominates the other (">>" operator).
         '''
+        # This problem is minimization, so this is ok
         dominates = False
         
         for i in range(len(self.objectives)):
-            if self.objectives[i] > other.objectives[i]:
+            if self.objectives[i] < other.objectives[i]:
                 return False
                 
-            elif self.objectives[i] < other.objectives[i]:
+            elif self.objectives[i] > other.objectives[i]:
                 dominates = True
         
         return dominates
@@ -133,8 +134,8 @@ class NSGAII:
             plt.title("Generation {}".format(i))
             plt.xlabel("-logP")
             plt.ylabel("-QED")
-            plt.xlim(-10, 0)
-            plt.ylim(-1, 0)
+            plt.xlim(0, 10)
+            plt.ylim(0, 1)
             plt.savefig("gen{}.png".format(i))
             plt.close()
              

@@ -107,11 +107,11 @@ class ChemGE(Solution):
         mol = Chem.MolFromSmiles(self.smiles)
 
         try:
-            self.objectives[0] = -Descriptors.MolLogP(mol)
-            self.objectives[1] = -QED.qed(mol)
+            self.objectives[0] = Descriptors.MolLogP(mol)
+            self.objectives[1] = QED.qed(mol)
         except:
-            self.objectives[0] = 100
-            self.objectives[1] = 100
+            self.objectives[0] = -100
+            self.objectives[1] = -100
 
         
     def crossover(self, other):
