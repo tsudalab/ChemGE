@@ -20,6 +20,9 @@ In this repository, we provide the code used in our experiment.
 1. rDock
 
 ## How to set up on Ubuntu 16.04
+Compile of rDock may fail in new compilers.
+I recommend to use Ubuntu 16.04.
+
 ### Install Python libraries
 
 ```
@@ -50,6 +53,7 @@ make linux-g++-64
 echo 'export RBT_ROOT="$HOME/rDock_2013.1_src"' >> $HOME/.bashrc
 echo 'export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$RBT_ROOT/lib"' >> $HOME/.bashrc
 echo 'export PATH="$PATH:$RBT_ROOT/bin"' >> $HOME/.bashrc
+source $HOME/.bashrc
 ```
 
 ### Download ChemGE
@@ -60,6 +64,7 @@ cd ChemGE
 ```
 
 # Usage
+Please execute in `my-rdkit-env` environment (please execute `source activate my-rdkit-env`)
 ## Optimize J
 
 ```
@@ -72,6 +77,8 @@ python -u optimize-J.py > log-file &
 python -u optimize-rdock.py > log-file &
 ```
 
+If all score is `10000000000.0`, installation of rDock may have failed.
+Please check installation directory.
 ## Optimize docking score (qsub)
 You need to set up parallel environment with qsub to execute this program.
 Using [CfnCluster](https://github.com/awslabs/cfncluster) is recommended.
@@ -91,7 +98,7 @@ python -u optimize-rdock-qsub.py > log-file &
 # How to generate files required to execute rDock
 Assume that rDock is installed following above step.
 
-1. Download `receptor.pdb` and `crystal_ligand.mol2` from [KITH (DUD-E)](http://dude.docking.org/targets/kith])
+1. Download `receptor.pdb` and `crystal_ligand.mol2` from [KITH (DUD-E)](http://dude.docking.org/targets/kith)
 
 2. Execute following commands
 ```

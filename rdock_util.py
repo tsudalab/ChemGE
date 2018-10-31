@@ -96,7 +96,7 @@ def score(smiles, num_docking=3):
             fw.close()
 
             # rdock calculation
-            cmd = '$RBT_ROOT/build/exe/rbdock -r cavity.prm '\
+            cmd = '$RBT_ROOT/bin/rbdock -r cavity.prm '\
                   '-p $RBT_ROOT/data/scripts/dock.prm '\
                   '-i {} -o {} -T 1 -n {} > /dev/null'\
                   .format(sdf_name, docking_result_file, num_docking)

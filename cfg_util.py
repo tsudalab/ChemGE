@@ -31,6 +31,7 @@ def encode(smiles):
     tokenize = get_zinc_tokenizer(GCFG)
     tokens = tokenize(smiles)
     parser = nltk.ChartParser(GCFG)
+    # if you use Python 2: parse_tree = parser.parse(tokens).next()
     parse_tree = parser.parse(tokens).__next__()
     productions_seq = parse_tree.productions()
     productions = GCFG.productions()
