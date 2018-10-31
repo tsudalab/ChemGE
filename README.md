@@ -2,6 +2,8 @@
 Molecule design using grammatical evolution.
 The paper is available at https://arxiv.org/abs/1804.02134
 
+Update: ChemGE paper is published in Chemistry Letters. https://doi.org/10.1246/cl.180665
+
 The advantages of ChemGE are:
 
 - Faster SMILES generation
