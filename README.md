@@ -1,4 +1,4 @@
-# ChemGE
+# ChemGE: Population-based De Novo Molecule Generation, Using Grammatical Evolution 
 Molecule design using grammatical evolution.
 The paper is available at https://arxiv.org/abs/1804.02134
 
