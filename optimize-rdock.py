@@ -52,15 +52,6 @@ def GenetoCFG(gene):
     return prod_rules
 
 
-def selectParent(population, tournament_size=3):
-    idx = np.random.randint(len(population), size=tournament_size)
-    best = population[idx[0]]
-    for i in idx[1:]:
-        if population[i][0] > best[0]:
-            best = population[i]
-    return best
-
-
 def mutation(gene):
     idx = np.random.choice(len(gene))
     gene_mutant = copy.deepcopy(gene)
