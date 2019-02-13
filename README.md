@@ -7,7 +7,7 @@ Update: ChemGE paper is published in Chemistry Letters. https://doi.org/10.1246/
 The advantages of ChemGE are:
 
 - Faster SMILES generation
-- Inherent paralleism
+- Inherent paralleismhttps://git.tsudalab.org/terayama/vae_bo_rdock.git
 - Novelty and diversity in designed molecules
 
 In this repository, we provide the code used in our experiment.
@@ -47,7 +47,7 @@ pip install nltk networkx
 ```
 sudo apt-get update
 sudo apt-get install build-essential libcppunit-dev libpopt-dev
-cd /home/ubuntu/
+cd ~
 wget https://sourceforge.net/projects/rdock/files/rDock_2013.1_src.tar.gz 
 tar xf rDock_2013.1_src.tar.gz
 cd rDock_2013.1_src/build/
@@ -98,15 +98,17 @@ python -u optimize-rdock-qsub.py > log-file &
 - Python files: Used in experiment. A part of `zinc_grammar.py` and `cfg_util.py` is from [mkusner/grammarVAE](https://github.com/mkusner/grammarVAE).
 
 # How to generate files required to execute rDock
+`cavity.prm` in this repository is for docking simulation with KITH. If you want to run ChemGE for different protein, you need to generate files on your own.
+
 Assume that rDock is installed following above step.
 
-1. Download `receptor.pdb` and `crystal_ligand.mol2` from [KITH (DUD-E)](http://dude.docking.org/targets/kith)
+1. Download `receptor.pdb` and `crystal_ligand.mol2` from DUD-E (e.g. [KITH (DUD-E)](http://dude.docking.org/targets/kith))
 
-2. Execute following commands
+2. Execute following commands (Open Babel is required to run these scripts)
 ```
-$ $RBT_ROOT/util/pdb2mol ./receptor.pdb  # pdb -> mol2
-$ $RBT_ROOT/util/mol2sd crystal_ligand.mol2 # mol2 -> sd(f)
-$ $RBT_ROOT/util/gen_prm crystal_ligand.sd receptor.mol2 > cavity.prm
+$ ChemGE/util/pdb2mol ./receptor.pdb  # pdb -> mol2
+$ ChemGE/util/mol2sd crystal_ligand.mol2 # mol2 -> sd(f)
+$ ChemGE/util/gen_prm crystal_ligand.sd receptor.mol2 > cavity.prm
 $ $RBT_ROOT/build/exe/rbcavity -r cavity.prm -W
 ```
 

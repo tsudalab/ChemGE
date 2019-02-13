@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+import openbabel
+import sys
+
+obConversion = openbabel.OBConversion()
+obConversion.SetInAndOutFormats("pdb", "mol2")
+
+fname = sys.argv[-1]
+mol = openbabel.OBMol()
+obConversion.ReadFile(mol, fname)
+mol.AddHydrogens()
+
+print("# of Atoms: ", mol.NumAtoms())
+print("# of Bonds: ", mol.NumBonds())
+print("# of Residues: ", mol.NumResidues())
+
+obConversion.WriteFile(mol, fname.replace(".pdb",".mol2"))

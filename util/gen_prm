@@ -1,0 +1,15 @@
+#!/bin/bash
+usage_exit1() {
+  echo "USAGE: $0 <sdFile> <receptorFile>"
+  echo "Description: Output a default content of a .prm file for cavity calculation"
+  echo "Arguments:"
+  echo "  <sdFile> - ligand SD file"
+  echo "  <receptorFile> - target mol2 file"
+  exit 1
+}
+
+if [ $# -eq 2 ]; then
+  cat ${RBT_HOME}/util/cavity_template.prm | sed -e "s/\${sdFile}/$1/" | sed -e "s/\${receptorFile}/$2/";
+else
+  usage_exit1
+fi

@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+import openbabel
+import sys
+
+obConversion = openbabel.OBConversion()
+obConversion.SetInAndOutFormats("mol2", "sdf")
+
+fname = sys.argv[-1]
+mol = openbabel.OBMol()
+obConversion.ReadFile(mol, fname)
+
+print("# of Atoms: ", mol.NumAtoms())
+print("# of Bonds: ", mol.NumBonds())
+print("# of Residues: ", mol.NumResidues())
+
+obConversion.WriteFile(mol, fname.replace(".mol2",".sd"))
