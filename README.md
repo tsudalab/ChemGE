@@ -7,7 +7,7 @@ Update: ChemGE paper is published in Chemistry Letters. https://doi.org/10.1246/
 The advantages of ChemGE are:
 
 - Faster SMILES generation
-- Inherent paralleismhttps://git.tsudalab.org/terayama/vae_bo_rdock.git
+- Inherent paralleism
 - Novelty and diversity in designed molecules
 
 In this repository, we provide the code used in our experiment.
